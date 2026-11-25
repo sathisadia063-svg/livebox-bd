@@ -1,0 +1,978 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<title>LiveBox BD - Live TV Streaming</title>
+<meta name="description" content="LiveBox BD - Watch live TV channels from Bangladesh.">
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<style>
+:root { 
+  --bg:#0a0a0a; 
+  --card:#1a1a1a; 
+  --card2:#1e1e1e;
+  --primary:#99f2e0; 
+  --text:#fff; 
+  --muted:#b3b3b3;
+  --purple:#a78bfa;
+}
+
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent; 
+}
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+  width: 100%;
+}
+
+body { 
+  background: var(--bg); 
+  color: var(--text); 
+  min-height: 100vh;
+}
+
+/* ============================================
+   HOME SCREEN
+============================================ */
+#home-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 30px 20px;
+  background: 
+    radial-gradient(circle at 15% -10%, rgba(153,242,224,0.15) 0, transparent 35%),
+    radial-gradient(circle at 90% 5%, rgba(167,139,250,0.15) 0, transparent 30%),
+    linear-gradient(145deg, #0a0a0a, #121212);
+}
+
+.home-logo {
+  text-align: center;
+  margin-bottom: 45px;
+}
+
+.home-logo-icon {
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, #99f2e0, #22d3ee);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: #000;
+  font-weight: 900;
+  margin: 0 auto 15px;
+  box-shadow: 0 0 30px rgba(153,242,224,0.4);
+}
+
+.home-logo-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #99f2e0;
+  letter-spacing: -0.5px;
+}
+
+.home-logo-title span { color: #fff; }
+
+.home-logo-sub {
+  font-size: 11px;
+  color: #888;
+  margin-top: 6px;
+  letter-spacing: 2px;
+  font-weight: 500;
+}
+
+.home-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.home-card {
+  background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
+  border: 1px solid #2a2a2a;
+  border-radius: 20px;
+  padding: 35px 25px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+.home-card:active { transform: scale(0.97); }
+.home-card:hover {
+  border-color: rgba(153,242,224,0.4);
+  box-shadow: 0 8px 30px rgba(153,242,224,0.15);
+}
+
+.home-card-icon {
+  width: 75px;
+  height: 75px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  font-size: 34px;
+  transition: transform 0.3s;
+}
+
+.home-card:hover .home-card-icon { transform: scale(1.08); }
+
+.card-livebox .home-card-icon {
+  background: radial-gradient(circle, rgba(153,242,224,0.2) 0%, rgba(34,211,238,0.1) 70%, transparent 100%);
+  color: #99f2e0;
+  border: 2px solid rgba(153,242,224,0.3);
+  box-shadow: 0 0 25px rgba(153,242,224,0.2);
+}
+
+.card-iptv .home-card-icon {
+  background: radial-gradient(circle, rgba(167,139,250,0.2) 0%, rgba(139,92,246,0.1) 70%, transparent 100%);
+  color: #a78bfa;
+  border: 2px solid rgba(167,139,250,0.3);
+  box-shadow: 0 0 25px rgba(167,139,250,0.2);
+}
+
+.home-card-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.home-card-sub {
+  font-size: 11px;
+  color: #888;
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* ============================================
+   CHANNEL PAGES
+============================================ */
+#livebox-page, #iptv-page {
+  display: none;
+  min-height: 100vh;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 12px;
+  background: linear-gradient(135deg, #1a1a1a, #0f0f0f);
+  border-bottom: 1px solid rgba(153,242,224,0.2);
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  gap: 12px;
+}
+
+#iptv-page .page-header { border-bottom-color: rgba(167,139,250,0.2); }
+
+.back-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #2a2a2a;
+  border: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.back-btn:active { transform: scale(0.95); }
+
+.page-title-wrap { flex: 1; min-width: 0; }
+
+.page-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #99f2e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#iptv-page .page-title { color: #a78bfa; }
+
+.page-subtitle {
+  font-size: 10px;
+  color: #888;
+  margin-top: 2px;
+  letter-spacing: 0.5px;
+}
+
+.channel-count {
+  background: rgba(153,242,224,0.15);
+  color: #99f2e0;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid rgba(153,242,224,0.3);
+  flex-shrink: 0;
+}
+
+#iptv-page .channel-count {
+  background: rgba(167,139,250,0.15);
+  color: #a78bfa;
+  border-color: rgba(167,139,250,0.3);
+}
+
+/* SEARCH */
+.search-wrap {
+  padding: 12px 10px 8px;
+  background: #181818;
+}
+.search-input {
+  width: 100%;
+  padding: 11px 15px;
+  border-radius: 12px;
+  border: 1px solid #333;
+  background: #1e1e1e;
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+}
+.search-input::placeholder { color: #888; }
+.search-input:focus { border-color: var(--primary); }
+#iptv-page .search-input:focus { border-color: var(--purple); }
+
+/* CATEGORY BAR */
+.category-bar {
+  display: flex;
+  gap: 8px;
+  padding: 8px 10px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: #181818;
+  border-bottom: 1px solid #2a2a2a;
+  position: sticky;
+  top: 66px;
+  z-index: 55;
+}
+.category-bar::-webkit-scrollbar { display: none; }
+
+.cat-btn {
+  padding: 8px 16px;
+  border-radius: 22px;
+  background: #2a2a2a;
+  color: #ddd;
+  border: 1px solid #333;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.cat-btn.active {
+  background: var(--primary);
+  color: #000;
+  border-color: var(--primary);
+  font-weight: 700;
+}
+
+#iptv-page .cat-btn.active {
+  background: var(--purple);
+  border-color: var(--purple);
+}
+
+/* CHANNEL GRID */
+.channel-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px 8px;
+  width: 100%;
+  overflow-x: hidden;
+}
+@media (min-width:600px){ 
+  .channel-grid{ grid-template-columns:repeat(4, minmax(0, 1fr)); padding: 15px; gap: 10px; } 
+}
+@media (min-width:900px){ 
+  .channel-grid{ grid-template-columns:repeat(6, minmax(0, 1fr)); padding: 20px; gap: 12px; } 
+}
+
+.channel-card {
+  background: var(--card);
+  border: 1px solid var(--primary);
+  border-radius: 10px;
+  padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  min-width: 0;
+  overflow: hidden;
+}
+.channel-card:active { transform: scale(0.95); }
+
+#iptv-page .channel-card { border-color: var(--purple); }
+
+.channel-logo {
+  width: 55px;
+  height: 55px;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 2px solid var(--primary);
+  padding: 4px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+#iptv-page .channel-logo { border-color: var(--purple); }
+
+.channel-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 4px;
+}
+
+.channel-logo .initial-badge {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.channel-name {
+  font-size: 10px;
+  text-align: center;
+  color: var(--text);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  padding: 0 2px;
+}
+
+.empty-msg {
+  grid-column: 1/-1;
+  text-align: center;
+  padding: 40px 20px;
+  color: #888;
+  font-size: 14px;
+}
+
+.site-footer {
+  text-align: center;
+  padding: 25px 15px;
+  color: #666;
+  font-size: 11px;
+  border-top: 1px solid #2a2a2a;
+  margin-top: 20px;
+}
+.site-footer b { color: #99f2e0; }
+
+/* PLAYER MODAL */
+#player-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.96);
+  z-index: 100;
+  flex-direction: column;
+}
+.player-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: var(--card2);
+}
+.player-header h2 { font-size: 15px; font-weight: 600; }
+.close-player {
+  font-size: 22px;
+  color: #fff;
+  cursor: pointer;
+  padding: 0 10px;
+}
+.player-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+.player-body video {
+  width: 100%;
+  max-height: 80vh;
+  background: #000;
+  border-radius: 8px;
+}
+.status {
+  text-align: center;
+  padding: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* SERVER SELECTOR */
+.server-bar {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--card2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-wrap: nowrap;
+}
+.server-bar::-webkit-scrollbar { display: none; }
+.server-bar:empty { display: none; }
+
+.server-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: #2a2a2a;
+  color: #ddd;
+  border: 1px solid #444;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.server-btn:active { transform: scale(0.95); }
+.server-btn.active {
+  background: var(--primary);
+  color: #000;
+  border-color: var(--primary);
+}
+</style>
+</head>
+<body>
+
+<!-- ============ HOME SCREEN ============ -->
+<div id="home-screen">
+  <div class="home-logo">
+    <div class="home-logo-icon">▶</div>
+    <div class="home-logo-title">LiveBox <span>BD</span></div>
+    <div class="home-logo-sub">LIVE TV STREAMING</div>
+  </div>
+
+  <div class="home-cards">
+    <div class="home-card card-livebox" onclick="openPage('livebox-page')">
+      <div class="home-card-icon">📺</div>
+      <div class="home-card-title">LiveBox BD</div>
+      <div class="home-card-sub">ALL CHANNELS</div>
+    </div>
+
+    <div class="home-card card-iptv" onclick="openPage('iptv-page')">
+      <div class="home-card-icon">🔗</div>
+      <div class="home-card-title">IPTV Playlist</div>
+      <div class="home-card-sub">HTTP CHANNELS</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ LIVEBOX BD PAGE ============ -->
+<div id="livebox-page">
+  <div class="page-header">
+    <div class="back-btn" onclick="goHome()">←</div>
+    <div class="page-title-wrap">
+      <div class="page-title">LiveBox BD</div>
+      <div class="page-subtitle">ALL CHANNELS</div>
+    </div>
+    <div class="channel-count" id="count1">0</div>
+  </div>
+
+  <div class="search-wrap">
+    <input type="text" id="search1" class="search-input" placeholder="Search channels...">
+  </div>
+
+  <div class="category-bar" id="cat-bar-1">
+    <button class="cat-btn active" onclick="filterCat(1, 'all', this)">All</button>
+    <button class="cat-btn" onclick="filterCat(1, 'BANGLADESH', this)">BANGLADESH</button>
+    <button class="cat-btn" onclick="filterCat(1, 'NF IPTV', this)">NF IPTV</button>
+    <button class="cat-btn" onclick="filterCat(1, 'Entertainment', this)">Entertainment</button>
+    <button class="cat-btn" onclick="filterCat(1, 'Adventure', this)">Adventure</button>
+    <button class="cat-btn" onclick="filterCat(1, 'Movies', this)">Movies</button>
+  </div>
+
+  <div class="channel-grid" id="grid1"></div>
+
+  <footer class="site-footer">
+    © 2025 <b>LiveBox BD</b> — All Channels
+  </footer>
+</div>
+
+<!-- ============ IPTV PLAYLIST PAGE ============ -->
+<div id="iptv-page">
+  <div class="page-header">
+    <div class="back-btn" onclick="goHome()">←</div>
+    <div class="page-title-wrap">
+      <div class="page-title">IPTV Playlist</div>
+      <div class="page-subtitle">HTTP CHANNELS</div>
+    </div>
+    <div class="channel-count" id="count2">0</div>
+  </div>
+
+  <div class="search-wrap">
+    <input type="text" id="search2" class="search-input" placeholder="Search channels...">
+  </div>
+
+  <div class="category-bar" id="cat-bar-2">
+    <button class="cat-btn active" onclick="filterCat(2, 'all', this)">All</button>
+  </div>
+
+  <div class="channel-grid" id="grid2"></div>
+
+  <footer class="site-footer">
+    © 2025 <b>LiveBox BD</b> — HTTP Channels
+  </footer>
+</div>
+
+<!-- ============ PLAYER MODAL ============ -->
+<div id="player-modal">
+  <div class="player-header">
+    <h2 id="player-title">Channel</h2>
+    <i class="close-player" onclick="closePlayer()">✕</i>
+  </div>
+  <div class="player-body">
+    <video id="video" controls playsinline></video>
+  </div>
+  <div class="server-bar" id="server-bar"></div>
+  <div class="status" id="status">Loading...</div>
+</div>
+
+<script>
+// ============================================
+// LIVEBOX BD CHANNELS
+// ============================================
+const httpsData = [
+  {"id":1,"name":"Nagorik TV","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-kb5MBvGaZ-CVtpYi2vM2Zy0LERvZSRlKNgyT1Zl3zw&s","streams":[{"url":"http://livetv.akr4m.com:8080/bdtv/restrem/38.m3u8"},{"url":"https://box.bbaria.net:8083/Nagorik_TV/video.m3u8"},{"url":"https://robitv.com/rn/http://103.141.70.136:8080//bdtv/restrem/38.m3u8"}]},
+  {"id":2,"name":"BTV","category":"BANGLADESH","logo_url":"https://i.ibb.co.com/k2R3QmKF/Picsart-24-10-21-19-38-26-976.webp","streams":[{"url":"http://livetv.akr4m.com:8080/bdtv/restrem/12.m3u8"},{"url":"https://btv.hridoytv-channel.workers.dev/btv.m3u8"},{"url":"https://owrcovcrpy.gpcdn.net/bpk-tv/1725/output/index.m3u8"}]},
+  {"id":3,"name":"BTV Chittagong","category":"BANGLADESH","logo_url":"https://i.ibb.co.com/k2R3QmKF/Picsart-24-10-21-19-38-26-976.webp","streams":[{"url":"https://tvsen6.aynaott.com/TjGR1GcxKetHNVcMVxbq/index.m3u8"},{"url":"https://robitv.com/rn/http://103.141.70.136:8080//bdtv/restrem/11.m3u8"}]},
+  {"id":4,"name":"BTV News","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQGFVQX3hXUtTTgwmRcWrehYFkfjeSiyHSSn1OCbWR6Yg&s","streams":[{"url":"https://btv.hridoytv-channel.workers.dev/news.m3u8"},{"url":"https://robitv.com/rn/http://103.141.70.136:8080//bdtv/restrem/13.m3u8"}]},
+  {"id":5,"name":"Somoy Tv","category":"BANGLADESH","logo_url":"https://i.ibb.co.com/JDkcwPP/Picsart-24-10-22-13-58-43-282.webp","streams":[{"url":"https://drk6xq0vhn.gpcdn.net/live/somoy_tv_abr/index.m3u8"},{"url":"http://198.195.239.50:8095/somoyTv/index.m3u8"},{"url":"https://cdn.devm3u.top/server5/somoy.m3u8"},{"url":"http://rgkkw.live/live/4dfoydR2gZ/clever3still/422.ts"},{"url":"http://103.165.93.31:8095/somoyTv/tracks-v1a1/mono.m3u8"}]},
+  {"id":6,"name":"Channel 24","category":"BANGLADESH","logo_url":"https://i.postimg.cc/0ys4hMyd/20240822-230446.png","streams":[{"url":"https://drk6xq0vhn.gpcdn.net/live/channel_24_abr/index.m3u8"},{"url":"https://stream.ottplus.live/live/channel_24_abr/index.m3u8"},{"url":"https://tvsen6.aynaott.com/YrVDF8gujkdh/tracks-v1a1/mono.ts.m3u8"},{"url":"https://robitv.com/rn/http://103.141.70.136:8080//bdtv/restrem/14.m3u8"}]},
+  {"id":7,"name":"Ekattor","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRIjE7f0aJxSS-mAtRUplbznzz2N6ECwgMpxvsyCe-9ig&s=10","streams":[{"url":"https://tvsen6.aynaott.com/EWDrV5QskgarZEUBb3pU/index.m3u8"},{"url":"https://playztv-apps.pages.dev/ekattor-tv/index.m3u8"}]},
+  {"id":8,"name":"DBC News","category":"BANGLADESH","logo_url":"https://i.ibb.co.com/n88NXrTz/Picsart-24-10-18-14-57-35-170.webp","streams":[{"url":"https://tvsen6.aynaott.com/pF66Tkz0qFwP2aMMqHyt/index.m3u8"}]},
+  {"id":9,"name":"Independent","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQjrkJKAyHpD97FHO01JRPLa5qiL0mzI3HDv4rGqc3GCQ&s=10","streams":[{"url":"https://drk6xq0vhn.gpcdn.net/live/independent_tv_abr/live/independent_tv_720/chunks.m3u8"},{"url":"http://premiumtvs.space/live/YqXTywueEV/damp2purchase/423.ts"},{"url":"http://livetv.akr4m.com:8080/bdtv/restrem/23.m3u8"},{"url":"https://ag.hridoytvx.workers.dev/live/RDoVR0fKOZnkvhs8o3b7y-jJRlqBPLP_eRzR_yd7EWf3zPM_9es2LthJ7MIGH5dArFbcuhx8uvJtwzi0Sq6mxIVZ4e_bJi0nKbBJlPoR12YEQIEu5eHYG_2Rq5HDXY230NL1CxWo8MCSuDaKi-qlzy20v6fraGnRYbAd9nKmNpAQKRjdgtOL8TMGgKDJNS3_F7sDD88u4zEGIj48hL6thNe6wQTsyYCx-dED0rI9WeLSUvMj7hij5VyWeoj_yx5IASyrUhJL9eD0jn6fHXlJBOEnfjiVhKubum9RV_yj7jWWwS8VKQH1ia_3EX8iU0Yc_4Qqys-yCSAHAeHAVTT3XkSNVb4kVWaBkoNFQ7_GuXOyMMUT6ZruuCvYM98Z2LCyhfYo6qN8O7VqLxlDBhbxEXRrruN8G5_jyI6mkv62yVqFN-4LFx9WrPSC2LefolxtdxiV_Ces8LDFLTSTy3jQyykmxmaSTGB6zIj-JQA14bZvV0Zb-dY6QS6gVUxQWaFP9Ld5L50ZQhxeMxk.m3u8"}]},
+  {"id":10,"name":"Jamuna","category":"BANGLADESH","logo_url":"https://i.ibb.co.com/Q53pd8Y/Picsart-24-10-18-14-34-53-452.webp","streams":[{"url":"https://tvsen6.aynaott.com/KGdZEdA7qQ43dmPkgk1j/index.m3u8"}]},
+  {"id":11,"name":"Jago News 24","category":"BANGLADESH","logo_url":"https://i.ibb.co.com/wZVCdh11/Picsart-24-10-22-13-05-19-527.webp","streams":[{"url":"https://app.ncare.live/live-orgin/jagonews24.stream/playlist.m3u8"}]},
+  {"id":12,"name":"News 24","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRpK4mqm72tmdh9tzERY-AqJMXChBzn5r--DhbrrSFTAA&s","streams":[{"url":"https://tvsen6.aynaott.com/cdgr3tw6WoG7JyRnLbi0/index.m3u8"}]},
+  {"id":13,"name":"Bangla 1","category":"BANGLADESH","logo_url":"https://i.postimg.cc/R0J6rLBn/r2Pe-JQRk-KVBJNHu-A1u-ABt-MFat3ZFl-Xm4oj-Tt5SWI.png","streams":[]},
+  {"id":14,"name":"ATN Bangla","category":"BANGLADESH","logo_url":"https://i.ibb.co.com/Y4W1JNn2/Picsart-24-10-18-14-23-02-130.webp","streams":[{"url":"https://tvsen5.aynaott.com/P3y2URgG7LDe/index.m3u8"},{"url":"https://robitv.com/rn/http://103.141.70.136:8080//bdtv/restrem/5.m3u8"}]},
+  {"id":15,"name":"ATN News","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRl_P0ZWFsplEbZmV5X0Il_deNFJyvwd6FT-ZifYNCOYQ&s=10","streams":[{"url":"https://tvsen6.aynaott.com/da6WMXAk/index.m3u8"},{"url":"http://livetv.akr4m.com:8080/bdtv/restrem/6.m3u8"}]},
+  {"id":16,"name":"Boishakhi","category":"BANGLADESH","logo_url":"https://i.ibb.co.com/RGKb7KqL/Picsart-24-10-22-17-24-17-694.webp","streams":[{"url":"https://tvsen6.aynaott.com/1d3uG9VCgrR9DRtWZM57/index.m3u8"},{"url":"https://boishakhi.sonarbanglatv.com/boishakhi/boishakhitv/index.m3u8"}]},
+  {"id":17,"name":"Ekushe TV","category":"BANGLADESH","logo_url":"https://i.ibb.co.com/bRg8Pbp9/Picsart-24-10-18-14-54-54-079.webp","streams":[{"url":"https://tvsen5.aynaott.com/SyQuXz8sC3TB/index.m3u8"},{"url":"https://app24.jagobd.com.bd/c3VydmVyX8RpbEU9Mi8xNy8yMFDEEHGcfRgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI2/ekusheytv-8-org.stream/index.m3u8"},{"url":"http://210.4.72.204/hls-live/livepkgr/_definst_/liveevent/livestream3.m3u8"}]},
+  {"id":18,"name":"Channel i","category":"BANGLADESH","logo_url":"https://i.ibb.co.com/BKYqSDx8/Picsart-24-10-18-14-26-28-392.webp","streams":[{"url":"https://tvsen6.aynaott.com/FNHpYvGZ7FkCE10PwTHm/index.m3u8"}]},
+  {"id":19,"name":"N TV","category":"BANGLADESH","logo_url":"https://i.ibb.co.com/B2wN1vn0/Picsart-24-10-18-14-52-14-900.webp","streams":[{"url":"https://tvsen5.aynaott.com/xV4jEKf3D9zc/index.m3u8"},{"url":"https://tvsen5.aynaott.com/JHPxHAWonztVucyc4GzF/index.m3u8"}]},
+  {"id":20,"name":"RTV","category":"BANGLADESH","logo_url":"https://i.ibb.co.com/fVQD2F6G/Picsart-24-10-18-15-01-52-492.webp","streams":[{"url":"https://tvsen5.aynaott.com/RtvHD/index.m3u8"},{"url":"http://tvsen5.aynascope.net/RtvHD/index.m3u8"}]},
+  {"id":21,"name":"Banglavision","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR95co-7n55t4sxRVFwqk1RMboYrnHKFFthJS_RPra0RA&s","streams":[{"url":"https://tvsen5.aynaott.com/banglavision/index.m3u8"},{"url":"https://robitv.com/rn/http://103.141.70.136:8080//bdtv/restrem/7.m3u8"},{"url":"https://tvsen5.aynaott.com/tgUzpPc9r6xw/index.m3u8"}]},
+  {"id":22,"name":"Ananda TV","category":"BANGLADESH","logo_url":"https://i.ibb.co.com/xqMZqHCk/Picsart-24-10-18-14-50-35-994.webp","streams":[{"url":"https://tvsen6.aynaott.com/LeUAm4F1iixYns3s3Non/index.m3u8"},{"url":"https://app24.jagobd.com.bd/c3VydmVyX8RpbEU9Mi8xNy8yMFDEEHGcfRgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI2/anandatv.stream/index.m3u8"},{"url":"https://playztv-apps.pages.dev/ananda-tv/index.m3u8"}]},
+  {"id":23,"name":"Channel 1","category":"BANGLADESH","logo_url":"https://i.ibb.co.com/wFyZ7nnD/Picsart-25-11-17-13-42-58-759.webp","streams":[{"url":"https://drk6xq0vhn.gpcdn.net/live/channel_1_hd_abr/index.m3u8"},{"url":"https://stream.ottplus.live/live/channel_1_hd_abr/index.m3u8"}]},
+  {"id":24,"name":"Star News","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ-dYO8pRf0Bb05AcYpe6e2oOFxQ61gIZzG7aCFaClMkQ&s=10","streams":[{"url":"https://iptvlive.ahmed-bd-org.workers.dev/star-news-2/index.m3u8"},{"url":"https://app24.jagobd.com.bd/c3VydmVyX8RpbEU9Mi8xNy8yMFDEEHGcfRgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcEdsEfeDeKiNkVN3PTOmdFseWRtaW51aiPhnPTI2/starnewsbd.stream/tracks-v1a1/mono.m3u8"},{"url":"https://bold-sky-a350.tasinazad234.workers.dev/stream/starnews/playlist.m3u8?expires=1790862478&sig=UyhTOxMA9KTKhCNjNRXrr0ilK8VdK8C3yOVhIkT3iHc"}]},
+  {"id":25,"name":"Rajdhani","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5i6y-sd_ATYLQO3FUGLQAWZl-BAefE2SyHP3j1RmtsQ&s=10","streams":[{"url":"https://stream.shariarsuvo.com/hls5/rajdhanicable.m3u8"},{"url":"http://103.14.151.101:8000/play/a0zz/89234183.m3u8"}]},
+  {"id":26,"name":"EP TV","category":"BANGLADESH","logo_url":"https://i.postimg.cc/dQyBRGZR/eptv-large-1784915389231-9f42f1b48d424c8c.webp","streams":[{"url":"https://app24.jagobd.com.bd/c3VydmVyX8RpbEU9Mi8xNy8yMFDEEHGcfRgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcEdsEfeDeKiNkVN3PTOmdFseWRtaW51aiPhnPTI2/eptv.stream/playlist.m3u8"}]},
+  {"id":27,"name":"News 21 Bangla TV","category":"BANGLADESH","logo_url":"https://i.postimg.cc/8knh34Z5/iju-Jfmd.png","streams":[{"url":"http://103.190.133.68:1935/news21live/live/playlist.m3u8"}]},
+  {"id":28,"name":"Enter TV","category":"BANGLADESH","logo_url":"https://play-lh.googleusercontent.com/ZzqDOHkm_HsqLbHtFs0pysILAHWX-N-Ng-FQc8UNVovaoYw4vVaeo2p-B8YMfpP49DR9BRLIujDQow04Nd795w","streams":[{"url":"https://live1.entertv.com.bd/entertv/tracks-v1a1/mono.m3u8"}]},
+  {"id":29,"name":"Desh TV","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTdtWbQSUZ65Ajb8YPY77g-JJQOGk18MK1qj6Z39PVUmQ&s=10","streams":[{"url":"https://app24.jagobd.com.bd/c3VydmVyX8RpbEU9Mi8xNy8yMFDEEHGcfRgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcEdsEfeDeKiNkVN3PTOmdFseWRtaW51aiPhnPTI2/deshtv.stream/index.m3u8"},{"url":"https://tvsen6.aynaott.com/ryFkXfd1a4CQ7mMdc820/index.m3u8"}]},
+  {"id":30,"name":"SA TV","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSGbDLPUDi7fxIB8ownjWjBybtcxZHcQjHgfeZFy2WDnA&s=10","streams":[{"url":"https://tvsen6.aynaott.com/rELXiuUXqbgzPb06Npom/index.m3u8"}]},
+  {"id":31,"name":"Deepto","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRJsPttAQrRl0mE2Z9bTyIy4684cJTfjITJyrPR_0JCgA&s=10","streams":[{"url":"https://byphdgllyk.gpcdn.net/hls/deeptotv/index.m3u8"},{"url":"https://byphdgllyk.gpcdn.net/hls/deeptotv/0_1/index.m3u8"}]},
+  {"id":32,"name":"Maasranga","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT8kTOl8Km81-CLBeJPhT6IV7qzcevpagYV0J23MEE8qA&s=10","streams":[{"url":"https://mtv.sunplex.live/MAASRANGA/index.m3u8"},{"url":"http://tvsen5.aynascope.net/maasrangatv/index.m3u8"}]},
+  {"id":33,"name":"Ekhon","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhkJZDMej0M1uEKqjgiJku-Iu4EZI4DVTZErRSP4w8dw&s=10","streams":[{"url":"https://app24.jagobd.com.bd/c3VydmVyX8RpbEU9Mi8xNy8yMFDEEHGcfRgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcEdsEfeDeKiNkVN3PTOmdFseWRtaW51aiPhnPTI2/globaltv.stream/index.m3u8"}]},
+  {"id":34,"name":"Nexus","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQyweNyHQvLTNxJB-L0JLBGSWR-xOl2Nujco0-weaKgJQ&s=10","streams":[{"url":"https://tvsen6.aynaott.com/Epm7WrFa/index.m3u8"},{"url":"https://stream.ottplus.live/live/nexus_tv_abr/index.m3u8"}]},
+  {"id":35,"name":"Channel 16","category":"BANGLADESH","logo_url":"https://static.wikia.nocookie.net/etv-gspn-bangla/images/d/d0/Channel_16_Logo.png","streams":[{"url":"http://app24.jagobd.com.bd/c3VydmVyX8RpbEU9Mi8xNy8yMFDEEHGcfRgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcEdsEfeDeKiNkVN3PTOmdFseWRtaW51aiPhnPTI2/channel16bd.stream/tracks-v1a1/mono.m3u8"}]},
+  {"id":36,"name":"Global TV","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSwNdhxN3ard9doKAcEr02Mav5pUaAoL-t1k7zZbMWqdQ&s","streams":[{"url":"https://stream.ottplus.live/live/global_tv_abr/index.m3u8"},{"url":"https://app24.jagobd.com.bd/c3VydmVyX8RpbEU9Mi8xNy8yMFDEEHGcfRgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI2/Global-tv.stream/index.m3u8"},{"url":"https://tvsen6.aynaott.com/y0q9eFAuquAtvTxRzUHq/index.m3u8"}]},
+  {"id":37,"name":"Channel S","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ5AAXxMK6tx5sCMCctCCxf9Ta5Lt0oEr4OTtmtBzzfdg&s=10","streams":[{"url":"https://tv5.genatuz070.workers.dev/cdn/live/slang/channel_s_tv_576/channel_s_tv_576.m3u8?bitrate=1800000&channel=channel_s_tv_576&gp_id=&hdnea=exp=1789775163~acl=/*~id=24997527701217361759883699099657~hmac=da41ae13dd0df394bbee85db1ee158496b15768c54a00087aeb1fdfdec9b9e8a"},{"url":"https://app.ncare.live/live-orgin/channels.stream/playlist.m3u8"},{"url":"https://app24.jagobd.com.bd/c3VydmVyX8RpbEU9Mi8xNy8yMFDEEHGcfRgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI2/channels.stream/index.m3u8"}]},
+  {"id":38,"name":"G TV","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS2XGlQmFXJ-ma8X0n-77FJTzWQxeF92bLjsnk4MHyR9A&s=10","streams":[{"url":"https://app.ncare.live/c3VydmVyX8RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI2/gazibdz.stream/live-orgin/gazibdz.stream/playlist.m3u8"}]},
+  {"id":39,"name":"Mohona Tv","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKaejVEpsvAROAHegcTGDV_Urk2sMSsnnX2ZQn_2M2Bg&s=10","streams":[{"url":"https://tvsen6.aynaott.com/AkyX5dunzju4cpo26dr7/index.m3u8"}]},
+  {"id":40,"name":"Bangla Tv","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQw1UNz8qtPXHkzy_MkX8s4NwzCBqO4lHpZWig3oCT3sA&s=10","streams":[{"url":"https://tvsen6.aynaott.com/39ee93nUbCCmm5LsyD4t/index.m3u8"}]},
+  {"id":41,"name":"Bijoy Tv","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcROukoifQBbw7BSsb89wQPQJYtppc4Ppsm_oP94Wkzczw&s=10","streams":[{"url":"https://stream.ottplus.live/live/bijoy_tv_abr/index.m3u8"},{"url":"https://tvsen6.aynaott.com/N8Xbo5vdwVU6sF43RsW0/index.m3u8"}]},
+  {"id":42,"name":"My Tv","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTC56WaiJPnxyGZUYP87mJldQZMhAapKLbs0J2Q0pSLpw&s=10","streams":[{"url":"https://tvsen6.aynaott.com/XMpHaEf0ANBhv8w6NWR7/index.m3u8"},{"url":"https://app24.jagobd.com.bd/c3VydmVyX8RpbEU9Mi8xNy8yMFDEEHGcfRgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI2/mytv-up-off.stream/index.m3u8"}]},
+  {"id":43,"name":"Nagorik","category":"BANGLADESH","logo_url":"https://upload.wikimedia.org/wikipedia/en/thumb/9/98/Logo_of_Nagorik_TV.svg/1280px-Logo_of_Nagorik_TV.svg.png?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=thumbnail","streams":[{"url":"https://box.bbaria.net:8083/Nagorik_TV/video.m3u8"},{"url":"https://torongoplus.vercel.app/tv.mp4"}]},
+  {"id":44,"name":"Green TV","category":"BANGLADESH","logo_url":"https://i.postimg.cc/ry4QcVbh/20240822-231240.png","streams":[{"url":"https://app24.jagobd.com.bd/c3VydmVyX8RpbEU9Mi8xNy8yMFDEEHGcfRgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI2/greentv.stream/index.m3u8"},{"url":"https://app.ncare.live/c3VydmVyX8RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI2/greentv.stream/live-orgin/greentv.stream/playlist.m3u8"}]},
+  {"id":45,"name":"Asian","category":"BANGLADESH","logo_url":"https://i.postimg.cc/xdj4TwHX/20240822-230629.png","streams":[{"url":"https://tvsen6.aynaott.com/pKb5k6NnzxsKpWUs6E8M/index.m3u8"}]},
+  {"id":46,"name":"Channel 9","category":"BANGLADESH","logo_url":"https://i.postimg.cc/59DTqkcr/20240822-230408.png","streams":[{"url":"https://tvsen6.aynaott.com/kajlsd57jnkdf/index.m3u8"},{"url":"http://premiumtvs.space/live/YqXTywueEV/damp2purchase/434.ts"},{"url":"http://livetv.akr4m.com:8080/bdtv/restrem/16.m3u8"},{"url":"https://playztv-apps.pages.dev/channel-9/index.m3u8"}]},
+  {"id":47,"name":"Movie Bangla","category":"BANGLADESH","logo_url":"https://i.postimg.cc/mr68ZtBn/20240822-231053.png","streams":[{"url":"http://alvetv.com/moviebanglatv/8080/index.m3u8"}]},
+  {"id":48,"name":"Me Tv","category":"BANGLADESH","logo_url":"https://i.postimg.cc/9fq1Q4Hz/20240825_070144.png","streams":[{"url":"https://iptvbd.live/metv1080/1080.m3u8"}]},
+  {"id":49,"name":"SRK","category":"BANGLADESH","logo_url":"https://asset.bioscopelive.com/uploads/images/2025/08/11/thumbnails_58ebcef1efcc65837557de15952d2643_goplay_srk_tv_landscape.jpg","streams":[{"url":"https://srknowapp.ncare.live/srktvhlswodrm/srktv.stream/playlist.m3u8"}]},
+  {"id":50,"name":"Amar Bangla","category":"BANGLADESH","logo_url":"https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgUeFLEldQakv_lXMHuwGSISSQbLWebNFciMBsxHQlSG7gkETGmf-tvJP3cGLsxfOIHBMFF8j1N3u8fKpgQx_t0yXBieelUvNHdE4VPoyPkDtnV2-TRJQBPDNnuAELlGNKZFo60jUONWBUx-W3Uq0HkXVqOsal3yVjkOkZ67y25QHVYLxSXIn84L9Sos70q/s2048/Picsart_24-10-22_19-33-49-063.png","streams":[{"url":"https://app.ncare.live/c3VydmVyX8RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI/amarbanglatv.stream/playlist.m3u8"}]},
+  {"id":51,"name":"Amar Digital TV","category":"BANGLADESH","logo_url":"https://th.bing.com/th/id/OIP.ZSBINjQw_TEmElNoECErVQHaDL?rs=1&pid=ImgDetMain","streams":[{"url":"http://115.187.41.216:8080/hls/amardigital/index.m3u8"}]},
+  {"id":52,"name":"Bangla+ HD","category":"BANGLADESH","logo_url":"https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEir8DIISD_3Ay4E2H__HTS4VFP7VXskYcIgkufU45epPzAFDKObL2D_p6mOal9B0RJpyaiA3feJuyaL8yvd0x-2nykRjc1pZPwT_aAGwmwFb4bEJf8oVDgty5NF30gzWlwHvh2P2c49pP2P8383ili_yboK1uSyqELcZygHTpSwru1VeK0mMwceugT5QLw/s1600/NadimRazaTVLogoDesign%282%29_copy_900x900_1.png","streams":[{"url":"https://live-stream.utkalbongo.com/hls/livebanglatvstream.m3u8"}]},
+  {"id":53,"name":"Toffee TV","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcOmF5-fIzc2IrwXLYSsmUegufJp7YPE-Cv2LAcjgFoQ&s=10","streams":[{"url":"https://bldcmprod-cdn.toffeelive.com/cdn/live/toffee_drama/playlist.m3u8"}]},
+  {"id":54,"name":"Channel 52","category":"BANGLADESH","logo_url":"https://yt3.googleusercontent.com/ytc/AIdro_nkJKVbw8obzDxMqr3icQerQ6PvZlkDFjbBaYRBfn83Lw=s160-c-k-c0x00ffffff-no-rj","streams":[{"url":"https://tvsen6.aynaott.com/channel52/tracks-v1a1/mono.ts.m3u8"},{"url":"http://str24.l9574.com/503.stream/tracks-v1a1/mono.m3u8"}]},
+  {"id":55,"name":"Deshe Bideshe","category":"BANGLADESH","logo_url":"https://pbs.twimg.com/profile_images/739539785304281088/zMwNO936_400x400.jpg","streams":[{"url":"https://dbcanada.sonarbanglatv.com/deshebideshe/dbtv/index.m3u8"}]},
+  {"id":56,"name":"Deshi TV","category":"BANGLADESH","logo_url":"https://www.jagobd.com/wp-content/uploads/2024/09/desitv.png","streams":[{"url":"https://deshitv.deshitv24.net/live/myStream/playlist.m3u8"}]},
+  {"id":57,"name":"Drama 24","category":"BANGLADESH","logo_url":"https://s3.aynaott.com/storage/08773290bf83a917aebc07810f12ed49","streams":[{"url":"https://vods2.aynaott.com/gseriesDrama/index.m3u8"},{"url":"https://vods2.aynaott.com/gseriesDrama/tracks-v1a1/mono.ts.m3u8"}]},
+  {"id":58,"name":"TBN 24","category":"BANGLADESH","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTP7YDixSWJm7L32jMiptC0Kpvw_poK4tfrlsm8zqrixA&s=10","streams":[{"url":"http://cdn01.palki.tv/live/TBN24-M/index.m3u8"}]},
+  {"id":59,"name":"NTV TV UK","category":"BANGLADESH","logo_url":"https://static.wikia.nocookie.net/logopedia/images/c/c7/NTV_logo_with_slogan_%28Bangladesh%29.png","streams":[{"url":"https://app.ncare.live/c3VydmVyX8RpbEU9Mi8xNy8yMDE0GIDU6RgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcGVMZEJCTEFWeVN3PTOmdFsaWRtaW51aiPhnPTI2/ntvuk00332211.stream/playlist.m3u8"}]},
+  {"id":60,"name":"Jolsha Bangla","category":"NF IPTV","logo_url":"https://i.supaimg.com/83afe636-c743-4025-87ea-6f9f3f10d71f/f0499487-db0c-431b-b345-cef9d8be7716.png","streams":[{"url":"http://103.151.60.162:2122/play/a02x/index.m3u8?hls"}]},
+  {"id":61,"name":"Star Bangla","category":"NF IPTV","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT44Z56zKoiEJjAokoaE6XaUIBTdrjejdvmb-RfOxONrA&s=10","streams":[{"url":"http://103.151.60.162:2122/play/a0f5/index.m3u8"}]},
+  {"id":62,"name":"Ja Tv","category":"NF IPTV","logo_url":"https://i.postimg.cc/NGkpvww2/jatv.png","streams":[{"url":"https://dish.porosh.com.bd/hls/jtvnews.m3u8"}]},
+  {"id":63,"name":"Bangla Cinema","category":"NF IPTV","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTiJNsDnJuFu6w8U9EoW43lik9ylpEOw6FDKklZTgOJYydtGnt9oG5aPQpa&s=10","streams":[{"url":"http://103.151.60.162:2122/play/a02m/index.m3u8?hls"}]},
+  {"id":64,"name":"Matribhumi Tv","category":"NF IPTV","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRVS_0Rz5iseyELSeGttGbxixrfh288RZP1LQK_ZJLQvg&s=10","streams":[{"url":"http://27.124.71.27/T-Sports/index.m3u8"}]},
+  {"id":65,"name":"SNB Cinema","category":"NF IPTV","logo_url":"https://i.supaimg.com/83afe636-c743-4025-87ea-6f9f3f10d71f/495ceb82-616a-4158-b8f4-2eba23ccd9eb.png","streams":[{"url":"http://103.182.83.246/hls/snbcinema.m3u8"}]},
+  {"id":66,"name":"CBN TV","category":"NF IPTV","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSZt_-KJ03ru3dZ4aJQAbvYnrqvDz4uu_aoD3oHKzTwag&s=10","streams":[{"url":"https://live.cbntvusa.net/hls/cbntv/index.m3u8"}]},
+  {"id":67,"name":"BHI Channel","category":"NF IPTV","logo_url":"https://play-lh.googleusercontent.com/PcAXvs0OZyme6dsppfqDZ9yHDsU-hkMBzWBxvpXekx8-bT_XWoW0qCB4QfktUZXwBQqQ5NqddeYHD_jJBQb0Yg=w240-h480","streams":[{"url":"https://server.livelegitpro.in/bhichannel/bhichannel/index.m3u8"}]},
+  {"id":68,"name":"B Prime Bangla","category":"NF IPTV","logo_url":"https://bhoomtv.org/wp-content/uploads/2026/06/ChatGPT-Image-Jun-26-2026-07_44_34-PM-1-200x300.png","streams":[{"url":"https://ranacable.duckdns.org/Bprimebangla/index.m3u8"}]},
+  {"id":69,"name":"Cineজমজমাট TV","category":"NF IPTV","logo_url":"https://i.supaimg.com/83afe636-c743-4025-87ea-6f9f3f10d71f/0522ed4e-38d5-43ad-9d77-65673a3d6829.jpg","streams":[{"url":"http://live.balajibroadband.com:3500/live/3518.m3u8"}]},
+  {"id":70,"name":"R TV Bangla","category":"NF IPTV","logo_url":"https://i.supaimg.com/83afe636-c743-4025-87ea-6f9f3f10d71f/122ad7ce-00d5-4dbd-ac83-9721cc1f5852.jpg","streams":[{"url":"http://150.129.178.198:8086/0.ts"}]},
+  {"id":71,"name":"JTV Colours","category":"NF IPTV","logo_url":"https://i.supaimg.com/83afe636-c743-4025-87ea-6f9f3f10d71f/1cb7581a-8d28-45e6-ba8e-6316ba996304.jpg","streams":[{"url":"http://103.67.97.46/0.ts"}]},
+  {"id":72,"name":"JTV Bangla","category":"NF IPTV","logo_url":"https://i.supaimg.com/83afe636-c743-4025-87ea-6f9f3f10d71f/1cb7581a-8d28-45e6-ba8e-6316ba996304.jpg","streams":[{"url":"http://103.67.97.45:81/0.ts"}]},
+  {"id":73,"name":"iON TV","category":"NF IPTV","logo_url":"https://static.wikitide.net/avidwiki/2/22/Ion5.png","streams":[{"url":"https://app.ncare.live/live-orgin/iontvuk.stream/playlist.m3u8"}]},
+  {"id":74,"name":"Thikana","category":"NF IPTV","logo_url":"https://imglink.cc/cdn/rw8iAU9ZcB.jpg","streams":[{"url":"https://5dd3981940faa.streamlock.net:443/thikanatv/thikanatv/playlist.m3u8"},{"url":"https://5dd3981940faa.streamlock.net/thikanatv/thikanatv/playlist.m3u8"}]},
+  {"id":75,"name":"Time Televis HD","category":"NF IPTV","logo_url":"https://static.wikia.nocookie.net/logopedia/images/d/de/News_Time_2.jpg","streams":[{"url":"https://app.ncare.live/live-orgin/timetvusa.stream/playlist.m3u8"}]},
+  {"id":76,"name":"A TV","category":"NF IPTV","logo_url":"https://i.supaimg.com/83afe636-c743-4025-87ea-6f9f3f10d71f/9b8c1600-4c7f-42fe-89a1-e5a42259ef39.jpg","streams":[{"url":"http://live.dataplayer.in:8080/live/amarbangla.m3u8"}]},
+  {"id":77,"name":"NRB HD TV","category":"NF IPTV","logo_url":"https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjeX0fMKpc_lRfrT6qTXG0iK7ltwilygRaZ61fPX_7T7RHkjdwTIaYDHWSMRVFez2eBnGGnAM3logWZ9f7r7uJGEZQQZfjb3hydOkm9Q2FEULaQHhxJkJqUrOA8xCxdnHEYTNhNoUSXONX48zDINAFHI80edoaKzFHO2TQg4N9ojnbp-Ae3eCX_XuQ-ZOE/s1600/NRBLogoDesignwithColorAccents_copy_900x900.png","streams":[{"url":"https://app.ncare.live/live-orgin/nrb-eu.stream/playlist.m3u8"}]},
+  {"id":78,"name":"Upohar Bangla","category":"NF IPTV","logo_url":"https://bhoomtv.org/wp-content/uploads/2026/05/ChatGPT-Image-May-23-2026-07_35_26-AM-1-200x300.png","streams":[{"url":"https://ranacable.duckdns.org/UpoharBangla/video.m3u8"}]},
+  {"id":79,"name":"Alo Tv Bangla","category":"NF IPTV","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRNtVUOcWr4uRgKtQMA_64GWHUfRtLcP0zy4zsjCd4Okg&s=10","streams":[{"url":"https://ranacable.duckdns.org/AloTv/video.m3u8"}]},
+  {"id":80,"name":"U Bangla TV","category":"NF IPTV","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR7j-wcHek_1xMzULxJp91qwA1gOkHyHJXQg2rG-lg85g&s=10","streams":[{"url":"https://stream.ottlive.co.in/ubangla/index.m3u8"}]},
+  {"id":81,"name":"NAFI MOVIE BANGLA","category":"NF IPTV","logo_url":"https://i.supaimg.com/83afe636-c743-4025-87ea-6f9f3f10d71f/a646d340-ac3c-4c4d-8de6-30946abe620d.png","streams":[{"url":"https://live20.bozztv.com/giatvplayout7/giatv-209627/tracks-v1a1/mono.ts.m3u8"}]},
+  {"id":82,"name":"NAFI MOVIE HINDI","category":"NF IPTV","logo_url":"https://i.supaimg.com/83afe636-c743-4025-87ea-6f9f3f10d71f/56da930b-8a72-464c-bfcd-803fc32e1e9d.png","streams":[{"url":"https://vods2.aynaott.com/hindimovies/index.m3u8"},{"url":"http://103.151.60.188:12345/hls/tab_po79ctf/index.m3u8?t=1788690987800"}]},
+  {"id":83,"name":"NAFI MOVIE SOUTH","category":"NF IPTV","logo_url":"https://i.supaimg.com/83afe636-c743-4025-87ea-6f9f3f10d71f/17a7999f-0a24-4fc7-878f-6d1dee5929c4.png","streams":[{"url":"https://live20.bozztv.com/giatvplayout7/giatv-209593/tracks-v1a1/mono.ts.m3u8"},{"url":"http://103.151.60.188:12345/hls/tab_po79ctf/index.m3u8?t=1788691286428"}]},
+  {"id":84,"name":"Bloy filx","category":"NF IPTV","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQTgpBnnlF5T9P2mbnXexU--KGw0x5nVHdXHFlAnY0iRw&s","streams":[{"url":"https://cc-r5hupcym5oehh.akamaized.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-r5hupcym5oehh/SBUM/RunnTV/BollyFlix_IN/BollyFlix_IN.m3u8"}]},
+  {"id":85,"name":"PROBASHI TV","category":"NF IPTV","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRNt8NRaowEx1PfpxdbYC6GEnS2BGjPClHRTeziRS321g&s=10","streams":[{"url":"http://158.69.24.53:8080/probashi_tv/tracks-v1a1/mono.m3u8"}]},
+  {"id":86,"name":"Doyel Tv","category":"NF IPTV","logo_url":"https://i.imgur.com/8pR8Q4J.png","streams":[{"url":"https://3d46w.doyeltv.com/memfs/aa3aa6f7-ec12-41a2-8183-a891e157bbf8.m3u8"}]},
+  {"id":87,"name":"DTV USA","category":"NF IPTV","logo_url":"https://yt3.ggpht.com/b5k6hzCSHAsvrPtt5xJXMMZb3GpciGCZRRWyXb4Xs7roWL1SK62R58XTi5PTx2ShAb3buqTOHfE=s512-c-k-c0x00ffffff-no-rj","streams":[{"url":"https://cdn.dtvusa.com/dtv/index.m3u8"}]},
+  {"id":88,"name":"Ayna TV","category":"NF IPTV","logo_url":"https://i.supaimg.com/83afe636-c743-4025-87ea-6f9f3f10d71f/bbfe3687-9aea-4e8f-a649-6cffbfe0acd2.jpg","streams":[{"url":"https://app24.jagobd.com.bd/c3VydmVyX8RpbEU9Mi8xNy8yMFDEEHGcfRgzQ6NTAgdEoaeFzbF92YWxIZTO0U0ezN1IzMyfvcEdsEfeDeKiNkVN3PTOmdFseWRtaW51aiPhnPTI2/ayna.stream/index.m3u8"}]},
+  {"id":89,"name":"probashi tv news","category":"NF IPTV","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSk7jVewyNqm1CHR85rDTydCQIxcYrxZlDexMjBZFpX4Q&s=10","streams":[{"url":"http://158.69.24.53:8080/probashi_tv/tracks-v1a1/mono.m3u8"}]},
+  {"id":90,"name":"Rana Cable Music","category":"NF IPTV","logo_url":"https://bhoomtv.org/wp-content/uploads/2026/04/ChatGPT-Image-Apr-21-2026-09_09_07-AM-1-200x300.png","streams":[{"url":"https://ranacable.duckdns.org/RanaCableMusic/playlist.m3u8"}]},
+  {"id":91,"name":"Rana Cable Tv","category":"NF IPTV","logo_url":"https://bhoomtv.org/wp-content/uploads/2026/04/ChatGPT-Image-Apr-21-2026-09_09_07-AM-1-200x300.png","streams":[{"url":"https://ranacable.duckdns.org/RanaCableTV/index.m3u8"}]},
+  {"id":92,"name":"Rana Movie Cable","category":"NF IPTV","logo_url":"https://bhoomtv.org/wp-content/uploads/2026/07/ChatGPT-Image-Jul-18-2026-10_45_51-AM-1-200x300.png","streams":[{"url":"https://ranacable.duckdns.org/RanaMovie/index.m3u8"}]},
+  {"id":93,"name":"NK TV Bangla","category":"NF IPTV","logo_url":"https://www.nktvbangla.com/wp-content/uploads/2023/09/WhatsApp-Image-2023-09-12-at-2.59.18-PM.jpg","streams":[{"url":"https://nktv.smartstream.video/smartstream-us/nkbangla/nkbangla/playlist.m3u8"}]},
+  {"id":94,"name":"D24 Digital","category":"NF IPTV","logo_url":"https://bhoomtv.org/wp-content/uploads/2026/02/ChatGPT-Image-May-24-2026-10_47_42-AM-1-200x300.png","streams":[{"url":"https://uttar-purbanewsmedia.cloud/hls/d24/d24live/index.m3u8"}]},
+  {"id":95,"name":"SONAR BANGLA","category":"NF IPTV","logo_url":"https://bhoomtv.org/wp-content/uploads/2026/01/ChatGPT-Image-Jan-23-2026-06_08_19-PM-1-200x300.png","streams":[{"url":"https://samitaorigin.tangotv.in/SONARBANGLA/SAMITAORIGIN/tracks-v1a1/mono.m3u8"}]},
+  {"id":96,"name":"Super Hit","category":"NF IPTV","logo_url":"https://5.imimg.com/data5/IMOB/Default/2024/8/439686858/ZD/CI/DM/135066294/cb-text-png-7-1-1-1722516567640-png-500x500.png","streams":[{"url":"http://103.151.60.162:2122/play/a02f/index.m3u8?hls"}]},
+  {"id":97,"name":"Jankhar TV","category":"NF IPTV","logo_url":"https://www.jagobd.com/wp-content/uploads/2019/05/Jhankartv.jpg","streams":[{"url":"https://dbcanada.sonarbanglatv.com/jhankartv/jtv/index.m3u8"}]},
+  {"id":98,"name":"Orange Bangla TV","category":"NF IPTV","logo_url":"https://static.wikia.nocookie.net/etv-gspn-bangla/images/e/e5/Orange_Bangla_logo_%282018%29.png","streams":[{"url":"https://cdn-4.pishow.tv/live/1499/master.m3u8"}]},
+  {"id":99,"name":"US-BD Journal 24 TV","category":"NF IPTV","logo_url":"https://usbdjournal24.com/wp-content/uploads/2026/07/150-Photoroom-e1783372793281.png","streams":[{"url":"http://str24.l9574.com/510.stream/index.m3u8"},{"url":"https://live20.bozztv.com/akamaissh101/ssh101/usbdjournal/chunks.m3u8"}]},
+  {"id":100,"name":"Jalsha Movie","category":"Entertainment","logo_url":"https://i.ibb.co.com/SXmSmg7r/Picsart-24-10-25-16-26-31-042.webp","streams":[{"url":"https://box.bbaria.net:8083/Jalsha_Movie/tracks-v1a1/mono.m3u8"},{"url":"https://Liveftp.zibobdixserver.top/Jalsha_Movie/index.m3u8"},{"url":"http://103.151.60.162:2122/play/a00x/index.m3u8"},{"url":"https://bold-sky-a350.tasinazad234.workers.dev/stream/btv/playlist.m3u8?expires=1791448428&sig=ltITtuOW0aZx4JjzYjnWm2qPnGEdUyFfTK6Q5nKdDTw"},{"url":"http://fastshare1.com:80/live/25711345/late8airline/23304.ts"}]},
+  {"id":101,"name":"Star Jalsha HD","category":"Entertainment","logo_url":"https://i.ibb.co.com/7dcZDC3q/Picsart-24-10-18-15-09-05-722.webp","streams":[{"url":"https://da86m1sqpm3o0.cloudfront.net/28072023/smil:starjalsha.smil/chunklist_b1928000.m3u8"},{"url":"https://yupptvcatchupire.yuppcdn.net/preview/starjalsha/1800.m3u8"}]},
+  {"id":102,"name":"Zee Bangla HD","category":"Entertainment","logo_url":"https://i.ibb.co.com/23dGnxBn/Picsart-24-10-18-15-06-46-163.webp","streams":[{"url":"https://da86m1sqpm3o0.cloudfront.net/260723/smil:zeebangla.smil/index.m3u8"},{"url":"http://livetv.akr4m.com:8080/bdtv/restrem/35.m3u8"},{"url":"https://bold-sky-a350.tasinazad234.workers.dev/stream/zeebangla/playlist.m3u8?expires=1791443256&sig=k1ugAbCEunCHvClz_-yJiW8UPtGVhF8GfChf_uqowZE"},{"url":"https://drk6xq0vhn.gpcdn.net/live/zee_bangla_720/index.m3u8"},{"url":"https://yupptvcatchupire.yuppcdn.net/preview/zeebangla/2500.m3u8"},{"url":"https://rangdhonu-proxy.tasinazad2009.workers.dev/stream/zeebangla2/playlist.m3u8?expires=1791612078&sig=8wsA2c94MG6uER34XcVdAy4Putks4RXInYk6-erzk2U"},{"url":"http://103.165.93.31:8095/zeeBangla/index.m3u8"}]},
+  {"id":103,"name":"Zee Bangla Cinema","category":"Entertainment","logo_url":"https://i.ibb.co.com/kVpCbFNm/Picsart-24-10-18-15-05-11-855.webp","streams":[{"url":"https://d1g8wgjurz8via.cloudfront.net/bpk-tv/ColorsHD/default/master2.m3u8"},{"url":"http://rgkkw.live/live/4dfoydR2gZ/clever3still/410.ts"},{"url":"http://premiumtvs.space/live/YqXTywueEV/damp2purchase/410.ts"},{"url":"https://bldcmprod-cdn.toffeelive.com/cdn/live/zee_bangla_cinema/playlist.m3u8"}]},
+  {"id":104,"name":"Colors Bangla HD","category":"Entertainment","logo_url":"https://i.ibb.co.com/DfM16WMd/Picsart-24-10-25-16-01-06-259.webp","streams":[{"url":"https://catchup.yuppcdn.net/amazonv2/36/preview/colorsbanglahd/master/chunklist.m3u8"},{"url":"http://103.151.60.162:2122/play/a02o/index.m3u8?hls"},{"url":"https://iptvcable.netlify.app/Altogether-007/Kolkata/ColorsBanglaHD.m3u8"}]},
+  {"id":105,"name":"Colors Bangla Cinema HD","category":"Entertainment","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS9cjM-A9HtqERwjXTnA7tbv4DJo1C0rKjML4cKIaOpsA&s=10","streams":[{"url":"http://103.114.11.37:8081/Colors-bangla-cinema/tracks-v1a1/mono.m3u8"},{"url":"http://premiumtvs.space/live/YqXTywueEV/damp2purchase/410.ts"},{"url":"https://bold-sky-a350.tasinazad234.workers.dev/stream/colorsbanglaceanama_copy_kore_lav_nai/playlist.m3u8?expires=1791046482&sig=hKDOpvxMcBc5HPBsyYwo0VzmqVhWN4-p_Qu94eCiJgk"}]},
+  {"id":106,"name":"Enter 10 Bangla","category":"Entertainment","logo_url":"https://i.ibb.co.com/840NTLs6/Picsart-24-10-18-15-11-32-440.webp","streams":[{"url":"https://live-bangla.akamaized.net/liveabr/pub-iobanglakp3sff/live_720p/chunks.m3u8"},{"url":"https://live-bangla.akamaized.net/liveabr/pub-iobanglakp3sff/live_240p/chunks.m3u8"}]},
+  {"id":107,"name":"Sony Aath","category":"Entertainment","logo_url":"https://i.ibb.co.com/TB4KCwv8/Picsart-24-10-22-04-38-57-770.webp","streams":[{"url":"https://stream.ottplus.live/live/sony_aath_abr/index.m3u8"},{"url":"https://digitalotthub.com/tv/toffee-by-maruf/live.php?id=sonyaath&e=.m3u8"},{"url":"https://live20.bozztv.com/giatvplayout7/giatv-209611/index.m3u8"}]},
+  {"id":108,"name":"Sun Bangla","category":"Entertainment","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSjQKSQpmMZQE97R6oz9jaqk6bzrHCzOENMyZq1pZJpyQ&s=10","streams":[{"url":"http://103.151.60.162:2122/play/a01p/index.m3u8?hls"},{"url":"http://rgkkw.live/live/4dfoydR2gZ/clever3still/3753.ts"},{"url":"https://live20.bozztv.com/giatvplayout7/giatv-209611/index.m3u8"}]},
+  {"id":109,"name":"R Plus Gold","category":"Entertainment","logo_url":"https://i.postimg.cc/P5GdL9Q7/RPlus-Gold-logo-(2013).webp","streams":[{"url":"https://vglivessai.akamaized.net/sg/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/cf883da3-f9f5-4c70-b0ef-b3ac2e2ad1e3/index.m3u8"},{"url":"https://cdn-4.pishow.tv/live/1231/1231_1.m3u8"}]},
+  {"id":110,"name":"Akash Bangla","category":"Entertainment","logo_url":"https://i.postimg.cc/NfgTVQw2/20240823_020726.png","streams":[{"url":"https://mumt03.tangotv.in/Dsly5z3HAAKASHAATH/index.m3u8"},{"url":"https://cdn-4.pishow.tv/live/969/master.m3u8"}]},
+  {"id":111,"name":"Khusbo Bangla","category":"Entertainment","logo_url":"https://i.postimg.cc/cCWYdSgj/20240823_020619.png","streams":[{"url":"http://livetv.akr4m.com:8080/bdtv/restrem/68.m3u8"},{"url":"http://103.175.73.12:8080/live/375/375_0.m3u8"},{"url":"https://cdn-4.pishow.tv/live/1473/master.m3u8"}]},
+  {"id":112,"name":"Sananda Tv","category":"Entertainment","logo_url":"https://i.postimg.cc/Kc7BJRCy/20240823_020704.png","streams":[{"url":"http://live-stream.amarbanglatv.in:8080/hls/sanandatv/index.m3u8"}]},
+  {"id":113,"name":"Ruposhi Bangla","category":"Entertainment","logo_url":"https://i.postimg.cc/TYCmvBR7/20240823_020800.png","streams":[{"url":"https://cdn-4.pishow.tv/live/1039/master.m3u8"},{"url":"https://da86m1sqpm3o0.cloudfront.net/28072023/smil:rupashibangla.smil/playlist.m3u8"},{"url":"http://103.175.73.12:8080/live/664/664_0.m3u8"}]},
+  {"id":114,"name":"DD Bangla","category":"Entertainment","logo_url":"https://static.wikia.nocookie.net/logopedia/images/c/ca/Dd_2019.webp","streams":[{"url":"https://d3qs3d2rkhfqrt.cloudfront.net/out/v1/7ff57cc9046b4c188b51a0d506f36e7f/index_3.m3u8"}]},
+  {"id":115,"name":"ABP Ananda","category":"Entertainment","logo_url":"https://static.wikia.nocookie.net/logopedia/images/a/a2/Abp-ananda.png","streams":[{"url":"https://amg01448-samsungin-abpananda-samsungin-ad-pw.amagi.tv/playlist/amg01448-samsungin-abpananda-samsungin/playlist.m3u8"},{"url":"https://amg01412-xiaomiasia-abpananda-xiaomi-lzyzw.amagi.tv/playlist/amg01412-xiaomiasia-abpananda-xiaomi/playlist.m3u8"}]},
+  {"id":116,"name":"Republic Bangla","category":"Entertainment","logo_url":"https://static.wikia.nocookie.net/logopedia/images/9/93/R.Bangla_logo_with_tagline.jpg","streams":[{"url":"https://vg-republictvyupp.akamaized.net/ptnr-yuppt/v1/manifest/611d79b11b77e2f571934fd80ca1413453772ac7/vglive-sk-613605/93d674ab-f7a0-404e-88b2-b4f163373dbe/0.m3u8"}]},
+  {"id":117,"name":"TV9 Bangla","category":"Entertainment","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQr1W3V-TfxJ3s9BFOqt08Cp-qRVWH8UmqJHlkr3OzEPA&s","streams":[{"url":"https://dyjmyiv3bp2ez.cloudfront.net/pub-iotv9banaen8yq/liveabr/playlist.m3u8"}]},
+  {"id":118,"name":"Animal Planet","category":"Adventure","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrL9c7dxPuJFHYFDzVRXP77SK5jZ9xlliGmwc-SXhv5g&s=10","streams":[{"url":"https://drk6xq0vhn.gpcdn.net/live/animal_planet_hd/index.m3u8"}]},
+  {"id":119,"name":"Discovery Bangla","category":"Adventure","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFjycCvDUdwc3KVlGHZKmW7J-NIQUz6zhhOZsTLqnayQ&s=10","streams":[{"url":"http://livetv.akr4m.com:8080/bdtv/restrem/51.m3u8"},{"url":"https://sm-monirul.xyz/@monirul_Islam_SM/stream.php?id=discovery_hd&e=.m3u8"},{"url":"http://202.70.146.135:8000/play/a05z/index.m3u8"},{"url":"https://stream.ottplus.bd/live/discovery_sd_abr/index.m3u8"}]},
+  {"id":120,"name":"Discovery Science","category":"Adventure","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ8rWlVE-vr93GP2Y0_oJQQHxd5tszyAGkQtNxL_I-O9w&s=10","streams":[{"url":"http://103.151.60.162:2122/play/a01j/index.m3u8"}]},
+  {"id":121,"name":"National Geographic","category":"Adventure","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRGxIIukW9eT9TeQOKF16V_bx6pmW9Y63oo8yBGMYEgjw&s=10","streams":[{"url":"http://51.75.127.199:3141/natgeo/tracks-v1a1/mono.m3u8"},{"url":"http://rgkkw.live:8080/live/4dfoydR2gZ/clever3still/98874.ts"}]},
+  {"id":122,"name":"National Wild","category":"Adventure","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQAfdMiO7zqoDcnRjkynnZG76eTp4gBy4uZftmm8UK2bw&s=10","streams":[{"url":"http://51.75.127.199:3141/natgeowild/index.m3u8"},{"url":"http://103.151.60.162:2122/play/a01f/index.m3u8"},{"url":"http://202.70.146.135:8000/play/a05j/index.m3u8"}]},
+  {"id":123,"name":"BBC Earth","category":"Adventure","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRpt3tb7v-j-NVhOlDZ5vgb-3KrF0jH6jLfJa7Cd1D3IA&s=10","streams":[{"url":"https://amg00793-amg00793c6-xumo-us-2669.playouts.now.amagi.tv/BBCStudios-BBCEarthA-hls/playlist540p.m3u8"}]},
+  {"id":124,"name":"Star Gold Thrills (Hindi)","category":"Movies","logo_url":"https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Star_Gold_Thrills_logo.png/320px-Star_Gold_Thrills_logo.png","streams":[{"url":"http://line.tivi-one.net/play/live.php?mac=A0:BB:3E:75:52:64&stream=373005&extension=m3u8"},{"url":"http://line.tivi-one.net/play/live.php?mac=A0:BB:3E:75:52:64&stream=373005&extension=ts"}]},
+  {"id":125,"name":"Sony Max","category":"Movies","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ8b2084eDCqL4ALdFimwE5MSO81HUYv36FVr6ejTbmPw&s=10","streams":[{"url":"http://1598364.3259760803.favermeto.com/live/4dfoydR2gZ/clever3still/98857.ts?token=ShJcU0BbQQNHWgIABwcDDw5TUQgCVFdVA1oHDlIGBQFXAAILBAoAWwEbGBpEF0dcWF1vWQIXXlgJWlcASUZGQVRCa1tXEVkbVAwNAARVARsVEkRZC1BGWwBVWwddVQYCBAMYEENaBxtfGwUBAVMCDA4SHBIDTRAEQwwDWzoAVkRYU1EQCV0WVQkVFldZPFFcVFFeVEQPRlETTkBeFhQRCBNjX0tFWgZORXZaVF4NUBsVElJZEkcFFVRAWBVWUwYCExwWUVxGDU0XQBYCFSFxGxUSVUgSUAoSWA0MFV9GR0ETHBZbQGwRXBZNRl1WDlBLGwoSAEQZRgxQGj1UCgpdV1JEXV1dQEEDRwgWFBUOWldQRF9COUUNBRNYQAZRUgEGExwWR0ZaBxtfGwJaD1oMXFwJA1EHBFwEAQBWBwcHUAQIUwFTAAQAAVwMFkU="},{"url":"https://drk6xq0vhn.gpcdn.net/live/sony_max_sd_abr/index.m3u8"}]},
+  {"id":126,"name":"Sony Max HD","category":"Movies","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSDkLdGKwDViKOs91kKeaxyQkFTKV-NxRsY1WAbordmgQ&s=10","streams":[{"url":"https://drk6xq0vhn.gpcdn.net/live/max_hd_abr/index.m3u8"}]},
+  {"id":127,"name":"Sony Max 2","category":"Movies","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSq7vVgoumvU9iWVQ28pdmXy82EGW0_CifKROyKKLr_Yw&s","streams":[{"url":"https://drk6xq0vhn.gpcdn.net/live/max_2_abr/index.m3u8"}]},
+  {"id":128,"name":"STAR GOLD HD","category":"Movies","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSg4tFcXA9RLE-xLf2trV2orWJtK7PT2CzU8AeT-drS7A&s=10","streams":[{"url":"http://livetv.akr4m.com:8080/bdtv/restrem/45.m3u8"},{"url":"https://robitv.com/rn/http://103.141.70.136:8080//bdtv/restrem/45.m3u8"},{"url":"http://66.102.126.10:8000/play/a00f/index.m3u8"}]},
+  {"id":129,"name":"Zee Cinema HD","category":"Movies","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQQ2AnZvDZ7JpO6XIemMQwxuPkMujNV_leMoN2n8xu51A&s=10","streams":[{"url":"https://robitv.com/rn/http://103.141.70.136:8080//bdtv/restrem/63.m3u8"},{"url":"https://drk6xq0vhn.gpcdn.net/live/zee_tv_hd_abr/index.m3u8"},{"url":"http://livetv.akr4m.com:8080/bdtv/restrem/63.m3u8"}]},
+  {"id":130,"name":"Zee Bollywood","category":"Movies","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRyTddHKsCLpG9Tvz7CY-KHDz_2JqAlZVOUc_c4-r7Zpg&s=10","streams":[{"url":"https://stream.ottplus.live/live/zee_bollywood_abr/index.m3u8"},{"url":"https://bldcmprod-cdn.toffeelive.com/cdn/live/zee_bollywood/playlist.m3u8"}]},
+  {"id":131,"name":"Zee Action","category":"Movies","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJ8DL1N8ktfDx-lTxpeo4EjSbIjpJ037uFyZElNzB8cg&s=10","streams":[{"url":"http://rgkkw.live/live/1Aoen7elp5/IgMJ60tmAa/967.ts"},{"url":"https://stream.ottplus.live/live/zee_action_abr/index.m3u8"}]},
+  {"id":132,"name":"Star Gold HD","category":"Movies","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSGs_wINnniJ5etD8Ncd3IAse4nrqESqkMbfg_tPp0p2A&s","streams":[{"url":"http://66.102.126.10:8000/play/a00f/index.m3u8"}]},
+  {"id":133,"name":"Star Gold 2 HD","category":"Movies","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTvDpowLX0ySLDEgrjeX9CDw9CsSWFNk5VpWkoSy9JgoQ&s=10","streams":[{"url":"http://107.167.16.138/stargold2/index.m3u8?token=test"}]},
+  {"id":134,"name":"Star Gold Selected","category":"Movies","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS76GE56T_YL1hWsYHBYYGS3PBnV8JxZd0QTcY6lGneH9qrrEK-4cS2qIg&s=10","streams":[{"url":"http://66.102.126.10:8000/play/a01s/index.m3u8"}]},
+  {"id":135,"name":"Colors HD","category":"Movies","logo_url":"https://i.postimg.cc/F1t6r1gv/20240823_023247.png","streams":[{"url":"http://202.70.146.135:8000/play/a00b/index.m3u8"}]},
+  {"id":136,"name":"Colors Cineplex","category":"Movies","logo_url":"https://i.postimg.cc/Tw3MFyQH/20240823_022713.png","streams":[{"url":"http://66.102.126.10:8000/play/a076/index.m3u8"}]},
+  {"id":137,"name":"Gold Mines Movie","category":"Movies","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSO8yRxIScSEP0VRagzi8HM8ZUT-r0lsvVA3_C5zIl0zOGxrrdV28uKk483&s=10","streams":[{"url":"https://streams.tangotv.in/GOLDMINEMOVIES/ORIGIN/index.m3u8"},{"url":"https://cdn-2.pishow.tv/live/1461/master.m3u8"}]},
+  {"id":138,"name":"Gold Mines Bollywood","category":"Movies","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS5V4BWujcHwKx4vXQ8Yv8_mRTh9RhFBHhXJMc_Q4Q4Kg&s=10","streams":[{"url":"https://mumt03.tangotv.in/Dsly5z3HGOLDMINESBOLLYWOOD/index.m3u8"},{"url":"https://streams.tangotv.in/GOLDMINESBOLLYWOOD/ORIGIN/index.m3u8"}]},
+  {"id":139,"name":"Gold Mines 2","category":"Movies","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6baaGaqb59H03VozX4FW1uZ5sIrWOVCoNOTgGRweQeA&s=10","streams":[{"url":"http://103.151.60.162:2122/play/a01v/index.m3u8?hls"},{"url":"https://mumt03.tangotv.in/Dsly5z3HGOLDMINESBOLLYWOOD/index.m3u8"}]},
+  {"id":140,"name":"The Movie Club","category":"Movies","logo_url":"https://bhoomtv.org/wp-content/uploads/2025/10/ChatGPT-Image-Feb-7-2026-09_26_47-AM-1-200x300.png","streams":[{"url":"https://sis-global.prod.samsungtv.plus/v1/tvpprd/sc-mp2ar4ca425xo.m3u8"}]},
+  {"id":141,"name":"HBO MOVIE HD","category":"Movies","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQra5BjekSOPB3tB78CqfkJa0W2lpP3Qo38O7qgxGIWKg&s","streams":[{"url":"http://livetv.akr4m.com:8080/bdtv/restrem/47.m3u8"},{"url":"https://robitv.com/rn/http://103.141.70.136:8080//bdtv/restrem/47.m3u8"}]},
+  {"id":142,"name":"HBO Hits HD","category":"Movies","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ-Z_fIYOns36PQ-y9-6M5eXbbVhFh-cn7aYIMLVZkYng&s=10","streams":[{"url":"http://livetv.akr4m.com:8080/bdtv/restrem/29.m3u8"},{"url":"https://robitv.com/rn/http://103.141.70.136:8080//bdtv/restrem/29.m3u8"}]},
+  {"id":143,"name":"HBO ignature","category":"Movies","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQijX_J7MDaCK2rv_fxYV8rKXJLg5-3Fva1f4X-DauOyg&s=10","streams":[{"url":"http://103.151.60.162:2122/play/a02g/index.m3u8?hls"}]},
+  {"id":144,"name":"STAR MOVIE HD","category":"Movies","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRHAnR8Yix2SW9RqFzcTsBUvvRGBUwy4Mhl1e0PVd4G7g&s=10","streams":[{"url":"http://103.151.60.162:2122/play/a02k/index.m3u8?hls"},{"url":"http://202.70.146.135:8000/play/a06r/index.m3u8"}]},
+  {"id":145,"name":"STAR MOVIE SELECT HD","category":"Movies","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRt3Hro_cxEd1jmanWn2EId4IMMMiRX67fh5vu4UGOvMA&s=10","streams":[{"url":"http://103.151.60.162:2122/play/a02l/index.m3u8?hls"},{"url":"http://202.70.146.135:8000/play/a06q/index.m3u8"}]},
+  {"id":146,"name":"Manoranjan Movies","category":"Movies","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQe4F0egDJr3_rr9pX-e81ooPzgxlDXgjzVqSQMy7tMIA&s=10","streams":[{"url":"https://mumt04.tangotv.in/m18aqlK4MANORANJANMOVIES/tracks-v1a1/mono.m3u8"}]},
+  {"id":147,"name":"Star Plus HD","category":"Movies","logo_url":"https://i.postimg.cc/8k3QXzvt/20240823_022853.png","streams":[{"url":"http://202.70.146.135:8000/play/a009/index.m3u8"}]},
+  {"id":148,"name":"& Tv","category":"Movies","logo_url":"https://i.postimg.cc/JhR9HDw4/20240823_023056.png","streams":[{"url":"https://bldcmprod-cdn.toffeelive.com/cdn/live/and_tv_hd/playlist.m3u8"}]},
+  {"id":149,"name":"& Picture","category":"Movies","logo_url":"https://i.postimg.cc/XJ1SbVzN/20240823_022738.png","streams":[{"url":"https://bldcmprod-cdn.toffeelive.com/cdn/live/andpicture_hd/playlist.m3u8"}]},
+  {"id":150,"name":"Zee Tv","category":"Movies","logo_url":"https://i.postimg.cc/x8BwX6QW/20240823_022929.png","streams":[{"url":"https://bldcmprod-cdn.toffeelive.com/cdn/live/zee_tv_hd/playlist.m3u8"}]},
+  {"id":151,"name":"HUM TV","category":"Movies","logo_url":"https://i.postimg.cc/vT4DKmf3/20240925_075103.png","streams":[{"url":"https://bldcmprod-cdn.toffeelive.com/cdn/live/hum_tv/playlist.m3u8"}]},
+  {"id":152,"name":"Sony Television","category":"Movies","logo_url":"https://i.postimg.cc/XYfRvKzz/20240823_023036.png","streams":[{"url":"https://drk6xq0vhn.gpcdn.net/live/sony_ent_sd_abr/index.m3u8"}]},
+  {"id":153,"name":"Sony Television HD","category":"Movies","logo_url":"https://i.postimg.cc/XYfRvKzz/20240823_023036.png","streams":[{"url":"https://drk6xq0vhn.gpcdn.net/live/sony_ent_hd_abr/index.m3u8"}]},
+  {"id":154,"name":"NAFI B4u Movie","category":"Movies","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQEnzxdP8-VmS1m5nxukY7H-EI3TiuHbD7D7I-CZQYGkg&s","streams":[{"url":"https://amg00877-b4unew-amg00877c2-xiaomi-in-5489.playouts.now.amagi.tv/playlist.m3u8"}]},
+  {"id":155,"name":"NAFI B4u kadak","category":"Movies","logo_url":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQnTzI_MpMcdO-fRGbGcuKweRXtowdnfjAKTT_jaI47lw&s=10","streams":[{"url":"https://amg00877-b4unew-amg00877c4-xiaomi-in-5473.playouts.now.amagi.tv/playlist.m3u8"}]},
+  {"id":156,"name":"Sony Sab HD","category":"Movies","logo_url":"https://i.postimg.cc/Gpz6FLrP/20240823_023114.png","streams":[{"url":"https://bldcmprod-cdn.toffeelive.com/cdn/live/sonysab_hd/playlist.m3u8"}]},
+  {"id":157,"name":"Sony Pal","category":"Movies","logo_url":"https://i.postimg.cc/3rbX1G92/images.jpg","streams":[{"url":"https://jioplaylistdown.yecic62314.workers.dev/live.m3u8?id=474"}]},
+  {"id":158,"name":"Sony Wah","category":"Movies","logo_url":"https://i.postimg.cc/8cF8kq2R/20240823_022835.png","streams":[{"url":"https://jioplaylistdown.yecic62314.workers.dev/live.m3u8?id=1393"}]},
+  {"id":159,"name":"B4U Movie","category":"Movies","logo_url":"https://i.postimg.cc/13nLvxQx/20250630_050504.png","streams":[{"url":"https://amg00877-b4unew-amg00877c2-xiaomi-in-5489.playouts.now.amagi.tv/playlist.m3u8"}]},
+  {"id":160,"name":"Shemarooenterta","category":"Movies","logo_url":"https://i.postimg.cc/tC7JLFj0/20240825_055845.png","streams":[{"url":"https://jioplaylistdown.yecic62314.workers.dev/live.m3u8?id=3075"}]}
+];
+
+// ============================================
+// HTTP CHANNELS (IPTV Playlist) - EMPTY
+// ============================================
+const httpData = [];
+
+// ============================================
+// GLOBAL STATE
+// ============================================
+let cat1 = 'all';
+let cat2 = 'all';
+const $ = id => document.getElementById(id);
+let hls = null;
+
+// ============================================
+// COLOR GENERATOR
+// ============================================
+function getColorFromName(name) {
+  const colors = [
+    '#e74c3c', '#e67e22', '#f39c12', '#f1c40f', '#2ecc71',
+    '#27ae60', '#16a085', '#1abc9c', '#3498db', '#2980b9',
+    '#9b59b6', '#8e44ad', '#e91e63', '#c0392b', '#d35400',
+    '#d81b60', '#5e35b1', '#3949ab', '#1e88e5', '#00897b',
+    '#43a047', '#7cb342', '#fb8c00', '#f4511e', '#6d4c41',
+    '#546e7a', '#ff5722', '#795548', '#607d8b', '#9c27b0'
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
+
+function getInitials(name) {
+  const clean = name.replace(/[^a-zA-Z0-9 ]/g, '').trim();
+  const words = clean.split(' ').filter(w => w);
+  if (words.length >= 2) {
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+  return clean.substring(0, 2).toUpperCase() || 'TV';
+}
+
+// ============================================
+// NAVIGATION
+// ============================================
+function openPage(pageId) {
+  document.getElementById('home-screen').style.display = 'none';
+  document.getElementById('livebox-page').style.display = 'none';
+  document.getElementById('iptv-page').style.display = 'none';
+  document.getElementById(pageId).style.display = 'block';
+  window.scrollTo(0, 0);
+  
+  if (pageId === 'livebox-page') {
+    cat1 = 'all';
+    resetCatBtns('cat-bar-1');
+    renderGrid(1);
+  } else if (pageId === 'iptv-page') {
+    cat2 = 'all';
+    resetCatBtns('cat-bar-2');
+    renderGrid(2);
+  }
+}
+
+function goHome() {
+  document.getElementById('livebox-page').style.display = 'none';
+  document.getElementById('iptv-page').style.display = 'none';
+  document.getElementById('home-screen').style.display = 'flex';
+  window.scrollTo(0, 0);
+}
+
+function resetCatBtns(barId) {
+  const bar = $(barId);
+  if (!bar) return;
+  bar.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  bar.querySelector('.cat-btn').classList.add('active');
+}
+
+// ============================================
+// FILTER
+// ============================================
+function filterCat(page, cat, btn) {
+  if (page === 1) { cat1 = cat; } else { cat2 = cat; }
+  const barId = page === 1 ? 'cat-bar-1' : 'cat-bar-2';
+  const bar = $(barId);
+  bar.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const searchId = page === 1 ? 'search1' : 'search2';
+  $(searchId).value = '';
+  renderGrid(page);
+}
+
+// ============================================
+// SEARCH
+// ============================================
+$('search1').addEventListener('input', () => renderGrid(1));
+$('search2').addEventListener('input', () => renderGrid(2));
+
+// ============================================
+// RENDER
+// ============================================
+function renderGrid(page) {
+  const srcData = page === 1 ? httpsData : httpData;
+  const category = page === 1 ? cat1 : cat2;
+  const searchId = page === 1 ? 'search1' : 'search2';
+  const gridId = page === 1 ? 'grid1' : 'grid2';
+  const countId = page === 1 ? 'count1' : 'count2';
+  
+  const query = $(searchId).value.toLowerCase().trim();
+  
+  const filtered = srcData.filter(c => {
+    if (category !== 'all' && c.category !== category) return false;
+    if (query && !c.name.toLowerCase().includes(query)) return false;
+    return true;
+  });
+  
+  $(countId).textContent = filtered.length;
+  
+  if (filtered.length === 0) {
+    $(gridId).innerHTML = '<div class="empty-msg">No channels found</div>';
+    return;
+  }
+  
+  $(gridId).innerHTML = filtered.map(c => {
+    const initials = getInitials(c.name);
+    const color = getColorFromName(c.name);
+    
+    let logoContent;
+    if (c.logo_url && c.logo_url.trim() !== '') {
+      logoContent = `
+        <img src="${c.logo_url}" alt="${c.name}" 
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+             loading="lazy">
+        <div class="initial-badge" style="background:${color}; display:none;">${initials}</div>
+      `;
+    } else {
+      logoContent = `<div class="initial-badge" style="background:${color};">${initials}</div>`;
+    }
+    
+    return `
+      <div class="channel-card" onclick="openChannel(${page}, ${c.id})">
+        <div class="channel-logo">
+          ${logoContent}
+        </div>
+        <div class="channel-name">${c.name}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ============================================
+// PLAYER
+// ============================================
+function openChannel(page, id) {
+  const srcData = page === 1 ? httpsData : httpData;
+  const c = srcData.find(x => x.id === id);
+  if (!c) return;
+
+  $('player-title').textContent = c.name;
+  $('player-modal').style.display = 'flex';
+  $('status').textContent = 'Loading...';
+
+  // Build server buttons
+  const bar = $('server-bar');
+  bar.innerHTML = '';
+  if (c.streams && c.streams.length > 1) {
+    c.streams.forEach((s, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'server-btn' + (i === 0 ? ' active' : '');
+      btn.textContent = 'Server ' + (i + 1);
+      btn.onclick = () => {
+        bar.querySelectorAll('.server-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        playStream(c.streams[i].url);
+      };
+      bar.appendChild(btn);
+    });
+  }
+
+  const url = c.streams?.[0]?.url;
+  if (!url) { 
+    $('status').textContent = 'No stream URL found'; 
+    return; 
+  }
+  playStream(url);
+}
+
+function playStream(url) {
+  $('status').textContent = 'Loading...';
+  if (hls) { hls.destroy(); hls = null; }
+
+  const v = $('video');
+  v.removeAttribute('src');
+  v.load();
+
+  if (v.canPlayType('application/vnd.apple.mpegurl')) {
+    v.src = url;
+    v.play().catch(() => {});
+    $('status').textContent = 'Ready. Press Play.';
+    return;
+  }
+
+  if (window.Hls && Hls.isSupported()) {
+    hls = new Hls({
+      enableWorker: true,
+      lowLatencyMode: true,
+      manifestLoadingTimeOut: 20000,
+      manifestLoadingMaxRetry: 3,
+      levelLoadingMaxRetry: 3,
+      fragLoadingMaxRetry: 3,
+      maxBufferLength: 20,
+      maxMaxBufferLength: 60,
+    });
+    hls.loadSource(url);
+    hls.attachMedia(v);
+
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      $('status').textContent = 'Ready. Press Play.';
+      v.play().catch(() => {});
+    });
+
+    hls.on(Hls.Events.ERROR, (_, d) => {
+      if (d.fatal) {
+        $('status').textContent = 'Stream not available. Try another server.';
+      }
+    });
+  } else {
+    $('status').textContent = 'HLS not supported';
+  }
+}
+
+function closePlayer() {
+  if (hls) { hls.destroy(); hls = null; }
+  const v = $('video');
+  v.pause();
+  v.removeAttribute('src');
+  v.load();
+  $('player-modal').style.display = 'none';
+}
+</script>
+
+</body>
+</html>
